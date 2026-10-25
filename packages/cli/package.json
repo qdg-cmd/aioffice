@@ -13,7 +13,8 @@
     "./control-protocol": "./src/control-protocol.ts"
   },
   "bin": {
-    "ieumoffice": "./bin/ieumoffice"
+    "aioffice": "./bin/aioffice",
+    "ieumoffice": "./bin/aioffice"
   },
   "scripts": {
     "build": "node build.mjs && node collect-deps.mjs",

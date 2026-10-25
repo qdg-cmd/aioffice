@@ -24,11 +24,11 @@ export const UPSTREAM_NAME_LITERAL = `{{${UPSTREAM_PRODUCT_NAME}}}`
  * productName, the userData folder, the default save folder), which must stay
  * the same whatever the UI language is.
  */
-export const PRODUCT_NAME = 'IeumOffice'
+export const PRODUCT_NAME = 'AIOffice'
 
 /** Languages that show a localized product name instead of PRODUCT_NAME. */
 const LOCALIZED_PRODUCT_NAMES: Readonly<Record<string, string>> = {
-  ko: '이음오피스',
+  ko: 'AI 오피스',
 }
 
 /** The product name as shown in a UI language (a Lang or a raw locale tag). */
@@ -46,16 +46,16 @@ export const USER_DATA_DIR_NAME = PRODUCT_NAME
 export const DEV_USER_DATA_DIR_NAME = `${PRODUCT_NAME}-Dev`
 
 /** The product's public GitHub repository: issues, releases and update checks all point here. */
-export const PRODUCT_REPO_OWNER = 'pblsketch'
-export const PRODUCT_REPO_NAME = 'openoffice'
+export const PRODUCT_REPO_OWNER = 'aioffice'
+export const PRODUCT_REPO_NAME = 'aioffice'
 /** `owner/repo`; the URLs built from it live in @genoffice/electron-utils (github-menu.ts) */
 export const PRODUCT_REPO_SLUG = `${PRODUCT_REPO_OWNER}/${PRODUCT_REPO_NAME}`
 
 /** The product's website: downloads, release notes and the step-by-step help pages. */
-export const PRODUCT_WEBSITE = 'https://ieumoffice.com'
+export const PRODUCT_WEBSITE = 'https://aioffice.dev'
 
 /** Where rights holders and users reach the maintainer about trademarks, copyright and licensing. */
-export const PRODUCT_CONTACT_EMAIL = 'pblsketch@gmail.com'
+export const PRODUCT_CONTACT_EMAIL = 'contact@aioffice.dev'
 
 const NAME_TOKEN = new RegExp(`\\{\\{${UPSTREAM_PRODUCT_NAME}\\}\\}|${UPSTREAM_PRODUCT_NAME}`, 'g')
 

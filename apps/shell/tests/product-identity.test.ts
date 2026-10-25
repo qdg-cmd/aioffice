@@ -80,7 +80,7 @@ describe('one product name', () => {
 
   it('shows the Korean name only in the Korean UI', () => {
     for (const lang of LANGS) {
-      expect(productName(lang), lang).toBe(lang === 'ko' ? '이음오피스' : PRODUCT_NAME)
+      expect(productName(lang), lang).toBe(lang === 'ko' ? 'AI 오피스' : PRODUCT_NAME)
     }
   })
 })

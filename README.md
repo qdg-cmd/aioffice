@@ -1,23 +1,17 @@
-# 이음오피스 (IeumOffice)
+# AIOffice (AI 오피스)
 
 **한국어** · [English](README.en.md)
 
-[![누적 다운로드](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpblsketch%2Fopenoffice%2Fmain%2Fdocs%2Ftracking%2Fgrowth-latest.json&query=%24.totalDownloads&label=%EB%88%84%EC%A0%81%20%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C)](https://github.com/pblsketch/openoffice/releases)
-[![별](https://img.shields.io/github/stars/pblsketch/openoffice?style=social)](https://github.com/pblsketch/openoffice/stargazers)
-
-이음오피스가 도움이 된다면 위의 **별**을 눌러 주세요. 별 하나가 이 프로그램을
-더 많은 사람에게 알리는 힘이 됩니다.
-
-이음오피스는 누구나 무료로 쓸 수 있는 오픈소스 데스크톱 오피스 프로그램입니다.
-워드, 엑셀, 파워포인트, PDF, 마크다운, HTML 문서와 마인드맵을 한 창에서 열고
+AIOffice는 누구나 무료로 쓸 수 있는 오픈소스 데스크톱 오피스 프로그램입니다.
+워드, 엑셀, 파워포인트, PDF, 한글(HWP/HWPX), 마크다운, HTML 문서와 마인드맵을 한 창에서 열고
 고칩니다.
 AI는 옆에서 답만 하는 것이 아니라 문서 자체를 고칩니다.
 
 AI는 **이미 쓰고 있는 Claude 또는 Codex 구독**으로 돌아갑니다. API 키를 발급받을
-필요가 없고, 이음오피스에 내는 돈도 없습니다. 구독이 없으면 **무료 AI**(OpenRouter,
+필요가 없고, AIOffice에 내는 돈도 없습니다. 구독이 없으면 **무료 AI**(OpenRouter,
 Google Gemini)를 연결해 쓸 수 있습니다.
 
-이음오피스는 오픈소스 프로젝트
+AIOffice는 오픈소스 프로젝트
 [GenOffice](https://github.com/genspark-ai/genoffice)를 바탕으로 고쳐 만든
 프로그램입니다([라이선스와 출처](#라이선스와-출처) 참고).
 

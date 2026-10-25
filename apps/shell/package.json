@@ -1,13 +1,13 @@
 {
   "name": "@genoffice/shell",
-  "productName": "IeumOffice",
+  "productName": "AIOffice",
   "version": "0.12.4",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/pblsketch/openoffice",
+  "homepage": "https://github.com/aioffice/aioffice",
   "private": true,
-  "description": "Unified IeumOffice shell: one app hosting the docs and sheets modules behind a home/launcher window",
+  "description": "Unified AIOffice shell: one app hosting docs, sheets, slides, pdf, markdown, html, mindmap, hwp and epub behind a home/launcher window",
   "main": "out/main/index.js",
-  "desktopName": "ieumoffice.desktop",
+  "desktopName": "aioffice.desktop",
   "scripts": {
     "dev": "electron-vite dev --watch",
     "build": "electron-vite build",
@@ -52,5 +52,5 @@
     "vite": "^7.3.1",
     "vitest": "^4.1.11"
   },
-  "author": "pblsketch <pblsketch@users.noreply.github.com>"
+  "author": "AIOffice Team <contact@aioffice.dev>"
 }
