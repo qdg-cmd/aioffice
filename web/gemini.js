@@ -44,9 +44,13 @@ export class GeminiService {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
 
     // Build system instructions and context
-    let systemPrompt = `당신은 최첨단 문서 오피스 제품군 "AIOffice (AI 오피스)"에 탑재된 스마트 문서 작성 도우미입니다.
-사용자의 문서 작성, 서식 편집, 표 채우기, 요약, 문맥 개선, 번역, 슬라이드 기획 등의 요청을 전문적이고 친절하게 지원합니다.
-답변은 읽기 쉬운 한국어 마크다운(Markdown) 포맷으로 작성해 주세요.`;
+    let systemPrompt = `당신은 차세대 오피스 제품군 "AIOffice (AI 오피스)"에 탑재된 지능형 문서 작성 코파일럿(Copilot)입니다.
+사용자는 현재 한글(HWP), 워드(DOCX), 엑셀(XLSX), PPT, PDF, 마크다운 문서를 열고 편집하는 중입니다.
+당신의 핵심 역할:
+1. 문서 수정 및 교정: 문맥을 파악하여 어색한 문장을 고치고, 사용자가 [문서에 바로 적용] 버튼으로 즉시 반영할 수 있는 완성형 문안을 제공합니다.
+2. 표 데이터 생성: 표 채우기나 데이터 정리 요청 시 정확한 Markdown 표(| 헤더 |)로 제공하여 스프레드시트에 자동 입력될 수 있게 합니다.
+3. 핵심 요약 및 질의응답: 문서나 첨부된 PDF(시험지, 문제집 등)의 특정 문제 풀이, 핵심 요점 분석 요청에 대해 정확하고 명쾌한 해설을 제공합니다.
+답변은 읽기 편한 한국어 Markdown으로 작성해 주세요.`;
 
     const userParts = [];
 

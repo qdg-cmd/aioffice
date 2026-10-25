@@ -80,6 +80,9 @@
       <!-- Injected dynamically by app.js -->
     </main>
 
+    <!-- Draggable Resizer Bar between Editor and AI Panel -->
+    <div class="resizer-drag-bar" id="aiPanelResizer" title="마우스로 드래그하여 AI 패널 너비를 조절하세요 (더블클릭 시 기본 크기)"></div>
+
     <!-- Right Sidebar: Google Gemini Copilot -->
     <aside class="sidebar-right" id="sidebarRight">
       <div class="ai-header">
@@ -141,7 +144,10 @@
     </div>
   </div>
 
-  <!-- External Document Engines (SheetJS for Excel, Mammoth for Word) -->
+  <!-- External Document Engines (HWP/HWPX, Excel, Word) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cfb@1.2.2/dist/cfb.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <script type="module" src="./app.js"></script>

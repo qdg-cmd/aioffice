@@ -106,6 +106,45 @@ class AIOfficeApp {
         this.loadFile(file);
       }
     });
+
+    // Draggable Split Resizer for AI Sidebar
+    const resizer = document.getElementById('aiPanelResizer');
+    const sidebarRight = document.getElementById('sidebarRight');
+    if (resizer && sidebarRight) {
+      let isDragging = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      resizer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startWidth = sidebarRight.getBoundingClientRect().width;
+        resizer.classList.add('dragging');
+        sidebarRight.classList.remove('animating');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const diff = startX - e.clientX;
+        const newWidth = Math.max(260, Math.min(window.innerWidth * 0.75, startWidth + diff));
+        sidebarRight.style.width = `${newWidth}px`;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          resizer.classList.remove('dragging');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+        }
+      });
+
+      resizer.addEventListener('dblclick', () => {
+        sidebarRight.style.width = '380px';
+      });
+    }
   }
 
   updateGeminiStatusBadge() {
@@ -693,6 +732,7 @@ class AIOfficeApp {
         aiMsgEl.innerHTML = this.renderMarkdownHtml(fullResponse);
       });
       aiMsgEl.innerHTML = this.renderMarkdownHtml(fullResponse);
+      this.attachCopilotActions(aiMsgEl, fullResponse);
     } catch (err) {
       aiMsgEl.innerHTML = `<span style="color:var(--danger);">⚠️ ${this.escapeHtml(err.message)}</span>`;
       if (!this.gemini.hasApiKey()) {
@@ -711,6 +751,104 @@ class AIOfficeApp {
     this.aiMessages.appendChild(msg);
     this.aiMessages.scrollTop = this.aiMessages.scrollHeight;
     return msg;
+  }
+
+  attachCopilotActions(msgEl, fullResponse) {
+    const footer = document.createElement('div');
+    footer.className = 'ai-action-footer';
+
+    // 1. Overwrite/Apply to Document
+    const btnApply = document.createElement('button');
+    btnApply.className = 'ai-doc-btn ai-doc-btn-apply';
+    btnApply.innerHTML = '📝 문서에 바로 적용';
+    btnApply.title = 'AI가 제안한 내용으로 현재 문서를 덮어씁니다';
+    btnApply.addEventListener('click', () => this.applyAiToDocument(fullResponse, 'replace'));
+    footer.appendChild(btnApply);
+
+    // 2. Append to Document
+    const btnInsert = document.createElement('button');
+    btnInsert.className = 'ai-doc-btn';
+    btnInsert.innerHTML = '➕ 문서 끝에 추가';
+    btnInsert.title = '현재 문서의 맨 아래에 AI 답변을 덧붙입니다';
+    btnInsert.addEventListener('click', () => this.applyAiToDocument(fullResponse, 'append'));
+    footer.appendChild(btnInsert);
+
+    // 3. Populate Spreadsheet Table if applicable
+    const activeTab = this.getActiveTab();
+    if (activeTab && activeTab.type === 'xlsx' && fullResponse.includes('|')) {
+      const btnTable = document.createElement('button');
+      btnTable.className = 'ai-doc-btn';
+      btnTable.innerHTML = '📊 표 데이터 채우기';
+      btnTable.title = 'AI가 생성한 표를 스프레드시트에 자동 입력합니다';
+      btnTable.addEventListener('click', () => this.applyAiTableToSheet(fullResponse));
+      footer.appendChild(btnTable);
+    }
+
+    // 4. Open as New Tab
+    const btnNewTab = document.createElement('button');
+    btnNewTab.className = 'ai-doc-btn';
+    btnNewTab.innerHTML = '📄 새 문서로 열기';
+    btnNewTab.title = 'AI 답변을 새 마크다운 문서로 엽니다';
+    btnNewTab.addEventListener('click', () => {
+      this.createNewTab('md', 'AI_답변.md', fullResponse);
+      this.showToast('새 탭에 AI 답변이 저장되었습니다!');
+    });
+    footer.appendChild(btnNewTab);
+
+    // 5. Copy Button
+    const btnCopy = document.createElement('button');
+    btnCopy.className = 'ai-doc-btn';
+    btnCopy.innerHTML = '📋 복사';
+    btnCopy.addEventListener('click', () => {
+      navigator.clipboard.writeText(fullResponse);
+      this.showToast('클립보드에 복사되었습니다!');
+    });
+    footer.appendChild(btnCopy);
+
+    msgEl.appendChild(footer);
+    this.aiMessages.scrollTop = this.aiMessages.scrollHeight;
+  }
+
+  applyAiToDocument(aiText, mode = 'replace') {
+    const tab = this.getActiveTab();
+    if (!tab) return;
+
+    // Extract markdown code block if present
+    let cleanText = aiText;
+    const codeMatch = aiText.match(/```(?:markdown|text|hwp|html)?\n([\s\S]*?)```/i);
+    if (codeMatch && codeMatch[1]) {
+      cleanText = codeMatch[1].trim();
+    }
+
+    if (mode === 'replace') {
+      tab.content = cleanText;
+    } else {
+      tab.content = (tab.content ? tab.content + '\n\n' : '') + cleanText;
+    }
+    tab.isDirty = true;
+    this.renderEditor();
+    this.showToast(mode === 'replace' ? '문서에 내용이 적용되었습니다!' : '문서 끝에 내용이 추가되었습니다!');
+  }
+
+  applyAiTableToSheet(aiText) {
+    const tab = this.getActiveTab();
+    if (!tab || tab.type !== 'xlsx') return;
+
+    const lines = aiText.split(/\r?\n/).filter(l => l.trim().startsWith('|') && l.trim().endsWith('|'));
+    if (lines.length < 2) {
+      this.showToast('AI 답변에서 표 형식을 찾을 수 없습니다.');
+      return;
+    }
+
+    const parseLine = (line) => line.slice(1, -1).split('|').map(c => c.trim());
+    const headers = parseLine(lines[0]);
+    const rowLines = lines.slice(1).filter(l => !l.includes('---'));
+    const rows = rowLines.map(parseLine);
+
+    tab.content = JSON.stringify({ headers, rows });
+    tab.isDirty = true;
+    this.renderEditor();
+    this.showToast('스프레드시트에 표 데이터가 채워졌습니다!');
   }
 
   triggerQuickAction(action) {
@@ -841,13 +979,158 @@ class AIOfficeApp {
       return;
     }
 
-    // 6. Text, Markdown, HTML, Code, HWP
+    // 6. Hangul HWPX (Open XML zip package)
+    if (ext === 'hwpx') {
+      this.parseHwpxFile(file).then(content => {
+        this.createNewTab('hwp', file.name, content);
+        this.showToast(`한글(HWPX) 문서 열기 완료: ${file.name}`);
+      }).catch(err => {
+        console.error('HWPX parse error:', err);
+        this.createNewTab('hwp', file.name, `[HWPX 파싱 오류: ${err.message}]`);
+      });
+      return;
+    }
+
+    // 7. Hangul HWP (Compound File Binary Format HWP 5.0)
+    if (ext === 'hwp') {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const content = this.parseHwpBuffer(ev.target.result);
+          this.createNewTab('hwp', file.name, content);
+          this.showToast(`한글(HWP) 문서 열기 완료: ${file.name}`);
+        } catch (err) {
+          console.error('HWP parse error:', err);
+          const fallback = this.extractFallbackHangul(ev.target.result);
+          this.createNewTab('hwp', file.name, fallback);
+          this.showToast(`한글(HWP) 본문 텍스트 복원 완료: ${file.name}`);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    // 8. Text, Markdown, HTML, Code
     const reader = new FileReader();
     reader.onload = (ev) => {
       this.createNewTab(ext || 'txt', file.name, ev.target.result);
       this.showToast(`문서 열기 완료: ${file.name}`);
     };
     reader.readAsText(file);
+  }
+
+  async parseHwpxFile(file) {
+    if (!window.JSZip) {
+      throw new Error('JSZip 라이브러리를 불러오지 못했습니다.');
+    }
+    const zip = await window.JSZip.loadAsync(file);
+    const secFiles = Object.keys(zip.files).filter(k => /Contents\/section\d+\.xml/i.test(k));
+    secFiles.sort();
+    const paragraphs = [];
+    for (const secName of secFiles) {
+      const xmlStr = await zip.files[secName].async('text');
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+      const pElements = xmlDoc.querySelectorAll('p, hp\\:p');
+      pElements.forEach(p => {
+        const textNodes = p.querySelectorAll('t, hp\\:t');
+        const text = Array.from(textNodes).map(t => t.textContent).join('');
+        if (text.trim()) {
+          paragraphs.push(text.trim());
+        }
+      });
+    }
+    return paragraphs.length > 0 ? paragraphs.join('\n\n') : '본문 텍스트가 없는 HWPX 문서입니다.';
+  }
+
+  parseHwpBuffer(arrayBuffer) {
+    if (!window.CFB) {
+      return this.extractFallbackHangul(arrayBuffer);
+    }
+    try {
+      const u8 = new Uint8Array(arrayBuffer);
+      const cfb = window.CFB.read(u8, { type: 'array' });
+      const paragraphs = [];
+
+      for (let i = 0; i < 50; i++) {
+        let section = window.CFB.find(cfb, `Root Entry/BodyText/Section${i}`);
+        if (!section) {
+          section = window.CFB.find(cfb, `BodyText/Section${i}`);
+        }
+        if (!section || !section.content) break;
+
+        let rawBytes;
+        if (window.pako) {
+          try {
+            rawBytes = window.pako.inflateRaw(section.content);
+          } catch {
+            try {
+              rawBytes = window.pako.inflate(section.content);
+            } catch {
+              rawBytes = section.content;
+            }
+          }
+        } else {
+          rawBytes = section.content;
+        }
+
+        const view = new DataView(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
+        let offset = 0;
+        while (offset + 4 <= rawBytes.byteLength) {
+          const header = view.getUint32(offset, true);
+          const tag = header & 0x3FF;
+          let size = (header >> 20) & 0xFFF;
+          offset += 4;
+          if (size === 0xFFF && offset + 4 <= rawBytes.byteLength) {
+            size = view.getUint32(offset, true);
+            offset += 4;
+          }
+          if (offset + size > rawBytes.byteLength) break;
+
+          if (tag === 67) { // HWPTAG_PARA_TEXT
+            let text = '';
+            for (let j = 0; j < size; j += 2) {
+              if (offset + j + 1 >= rawBytes.byteLength) break;
+              const code = view.getUint16(offset + j, true);
+              if (code === 13) {
+                text += '\n';
+              } else if (code >= 32) {
+                text += String.fromCharCode(code);
+              }
+            }
+            if (text.trim()) {
+              paragraphs.push(text.trim());
+            }
+          }
+          offset += size;
+        }
+      }
+
+      if (paragraphs.length > 0) {
+        return paragraphs.join('\n\n');
+      }
+    } catch (err) {
+      console.warn('HWP CFB parsing failed, falling back:', err);
+    }
+    return this.extractFallbackHangul(arrayBuffer);
+  }
+
+  extractFallbackHangul(arrayBuffer) {
+    const u8 = new Uint8Array(arrayBuffer);
+    let result = '';
+    // Scan UTF-16LE Korean and ASCII characters
+    for (let i = 0; i < u8.length - 1; i += 2) {
+      const code = u8[i] | (u8[i + 1] << 8);
+      if ((code >= 0xAC00 && code <= 0xD7A3) || (code >= 32 && code <= 126) || code === 10 || code === 13) {
+        result += String.fromCharCode(code);
+      }
+    }
+    const clean = result.replace(/\n{3,}/g, '\n\n').trim();
+    if (clean.length > 20) {
+      return clean;
+    }
+    return '[한글(HWP) 파일의 본문 데이터입니다]\n\n' + (clean || '내용을 직접 입력하거나 편집할 수 있습니다.');
+  }
   }
 
   handleFileSelect(e) {

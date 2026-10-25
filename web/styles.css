@@ -326,6 +326,7 @@ body {
 /* Center Editor Canvas */
 .editor-canvas {
   flex: 1;
+  min-width: 0;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -341,13 +342,21 @@ body {
   padding: 0 12px;
   gap: 8px;
   background: var(--bg-primary);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.editor-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .editor-content-area {
   flex: 1;
+  min-width: 0;
   overflow: auto;
   position: relative;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 /* Markdown Editor */
@@ -355,10 +364,12 @@ body {
   display: flex;
   height: 100%;
   gap: 16px;
+  min-width: 0;
 }
 
 .markdown-input {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
   background: var(--bg-card);
   color: var(--text-primary);
@@ -373,7 +384,8 @@ body {
 }
 
 .markdown-preview {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -381,6 +393,7 @@ body {
   padding: 24px;
   overflow-y: auto;
   line-height: 1.7;
+  word-break: break-word;
 }
 
 .markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
@@ -576,18 +589,38 @@ body.drag-over {
   outline-offset: -3px;
 }
 
+/* Draggable Resizer Bar */
+.resizer-drag-bar {
+  width: 6px;
+  cursor: col-resize;
+  background: var(--border-color);
+  transition: background 0.15s ease;
+  user-select: none;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.resizer-drag-bar:hover,
+.resizer-drag-bar.dragging {
+  background: var(--accent);
+}
+
 /* HWP & Rich Text Editor */
 .doc-page {
-  max-width: 800px;
-  min-height: 1000px;
+  width: 100%;
+  max-width: 850px;
+  min-height: 900px;
   margin: 0 auto;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  padding: 60px 80px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  padding: 40px clamp(20px, 5vw, 60px);
   outline: none;
   font-size: 1rem;
   line-height: 1.8;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Mindmap */
@@ -618,15 +651,23 @@ body.drag-over {
 /* Right AI Panel (Gemini Copilot) */
 .sidebar-right {
   width: var(--ai-panel-width);
+  min-width: 260px;
+  max-width: 80vw;
   background: var(--bg-secondary);
   border-left: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.sidebar-right.animating {
   transition: width 0.2s ease;
 }
 
 .sidebar-right.collapsed {
-  width: 0;
+  width: 0 !important;
+  min-width: 0 !important;
   overflow: hidden;
   border: none;
 }
@@ -637,6 +678,7 @@ body.drag-over {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  user-select: none;
 }
 
 .ai-model-tag {
@@ -657,15 +699,15 @@ body.drag-over {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .msg {
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-radius: 8px;
   font-size: 0.85rem;
-  line-height: 1.5;
-  max-width: 90%;
+  line-height: 1.6;
+  max-width: 95%;
   word-break: break-word;
 }
 
@@ -682,6 +724,49 @@ body.drag-over {
   color: var(--text-primary);
   align-self: flex-start;
   border-bottom-left-radius: 2px;
+  width: 100%;
+}
+
+/* Copilot Document Action Buttons */
+.ai-action-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.ai-doc-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.ai-doc-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ai-doc-btn-apply {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.ai-doc-btn-apply:hover {
+  background: var(--accent-hover);
+  color: #fff;
 }
 
 .ai-quick-actions {
@@ -736,16 +821,21 @@ body.drag-over {
   border-color: var(--border-focus);
 }
 
+/* Resizable Prompt Input Textarea */
 .ai-textarea {
   width: 100%;
-  height: 60px;
+  min-height: 80px;
+  height: 100px;
+  max-height: 400px;
+  resize: vertical;
   background: transparent;
   border: none;
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 0.85rem;
-  resize: none;
+  font-size: 0.88rem;
+  line-height: 1.5;
   outline: none;
+  padding: 4px;
 }
 
 .ai-submit-row {
