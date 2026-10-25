@@ -12,7 +12,7 @@
 </head>
 <body>
   <!-- Global Hidden File Input -->
-  <input type="file" id="fileInput" style="display:none;" accept=".hwp,.hwpx,.docx,.xlsx,.pptx,.pdf,.md,.markdown,.txt,.json,.html,.xmind,.epub">
+  <input type="file" id="fileInput" style="display:none;" accept=".hwp,.hwpx,.docx,.xlsx,.xls,.csv,.pptx,.pdf,.md,.markdown,.txt,.json,.html,.xmind,.epub,.png,.jpg,.jpeg,.svg">
 
   <!-- Header -->
   <header class="app-header">
@@ -141,6 +141,9 @@
     </div>
   </div>
 
+  <!-- External Document Engines (SheetJS for Excel, Mammoth for Word) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

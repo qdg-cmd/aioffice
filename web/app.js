@@ -87,6 +87,25 @@ class AIOfficeApp {
 
     // Hancom Hangul Shortcuts Global Interceptor for HWP tabs
     window.addEventListener('keydown', (e) => this.handleGlobalShortcuts(e));
+
+    // Global Drag & Drop File Loading
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      document.body.classList.add('drag-over');
+    });
+    window.addEventListener('dragleave', (e) => {
+      if (e.clientX <= 0 || e.clientY <= 0) {
+        document.body.classList.remove('drag-over');
+      }
+    });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      document.body.classList.remove('drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        this.loadFile(file);
+      }
+    });
   }
 
   updateGeminiStatusBadge() {
@@ -154,11 +173,16 @@ class AIOfficeApp {
     const ext = extMap[type] || `.${type}`;
     const defaultTitle = title || `새_문서_${this.tabs.length + 1}${ext}`;
 
+    const isObjectContent = typeof content === 'object' && content !== null && !Array.isArray(content);
     const newTab = {
       id,
       type,
       title: defaultTitle,
-      content: content || this.getDefaultContent(type, defaultTitle),
+      content: isObjectContent ? (content.text || `[${type.toUpperCase()} 문서: ${defaultTitle}]`) : (content || this.getDefaultContent(type, defaultTitle)),
+      blobUrl: isObjectContent ? content.blobUrl : null,
+      base64Data: isObjectContent ? content.base64Data : null,
+      mimeType: isObjectContent ? content.mimeType : null,
+      fileSize: isObjectContent ? content.fileSize : null,
       isDirty: false
     };
 
@@ -281,6 +305,12 @@ class AIOfficeApp {
     this.editorCanvas.appendChild(contentArea);
 
     switch (tab.type) {
+      case 'pdf':
+        this.renderPdfViewer(contentArea, tab);
+        break;
+      case 'image':
+        this.renderImageViewer(contentArea, tab);
+        break;
       case 'md':
         this.renderMarkdownEditor(contentArea, tab);
         break;
@@ -524,14 +554,80 @@ class AIOfficeApp {
     const page = document.createElement('div');
     page.className = 'doc-page';
     page.contentEditable = 'true';
-    page.innerText = tab.content;
+    if (typeof tab.content === 'string' && (tab.content.includes('<p>') || tab.content.includes('<div>') || tab.content.includes('<h1>') || tab.content.includes('<h2>') || tab.content.includes('<table>'))) {
+      page.innerHTML = tab.content;
+    } else {
+      page.innerText = tab.content || '';
+    }
 
     page.addEventListener('input', () => {
-      tab.content = page.innerText;
+      tab.content = page.innerHTML;
       tab.isDirty = true;
     });
 
     container.appendChild(page);
+  }
+
+  renderPdfViewer(container, tab) {
+    container.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pdf-viewer-container';
+
+    if (tab.blobUrl) {
+      const sizeStr = tab.fileSize ? `(${(tab.fileSize / 1024 / 1024).toFixed(2)} MB)` : '';
+      wrapper.innerHTML = `
+        <div class="pdf-toolbar-bar">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:600;">📕 ${this.escapeHtml(tab.title)}</span>
+            <span style="color:var(--text-muted); font-size:0.75rem;">${sizeStr}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="btn btn-sm btn-primary" id="btnAiAnalyzePdf">⚡ Gemini로 이 PDF 분석·요약</button>
+            <a href="${tab.blobUrl}" target="_blank" class="btn btn-sm" title="새 브라우저 탭에서 크게 보기">↗️ 새 탭에서 열기</a>
+            <a href="${tab.blobUrl}" download="${this.escapeHtml(tab.title)}" class="btn btn-sm" title="내 컴퓨터로 다운로드">💾 다운로드</a>
+          </div>
+        </div>
+        <iframe src="${tab.blobUrl}#toolbar=1&navpanes=1&scrollbar=1" class="pdf-iframe" title="PDF Viewer"></iframe>
+      `;
+      wrapper.querySelector('#btnAiAnalyzePdf')?.addEventListener('click', () => {
+        this.aiPromptInput.value = '이 PDF 문서의 핵심 내용을 요약하고 중요한 문제나 개념을 설명해 줘.';
+        this.sendAiPrompt();
+      });
+    } else {
+      wrapper.innerHTML = `
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:var(--text-secondary); padding:40px; text-align:center;">
+          <div style="font-size:3.5rem;">📕</div>
+          <h3 style="color:var(--text-primary); font-size:1.3rem;">PDF 문서 뷰어</h3>
+          <p style="font-size:0.9rem; max-width:460px; line-height:1.7;">
+            화면 상단의 <b>[📂 파일 열기]</b> 버튼을 클릭하거나,<br>
+            컴퓨터에 있는 PDF 문제집·시험지·문서를 <b>화면 위로 드래그</b>하여 놓으면<br>
+            실제 책처럼 깨끗하게 열리고, Gemini AI에게 바로 질문할 수 있습니다.
+          </p>
+          <button class="btn btn-primary" id="btnSelectPdf">📂 내 컴퓨터에서 PDF 열기</button>
+        </div>
+      `;
+      wrapper.querySelector('#btnSelectPdf')?.addEventListener('click', () => {
+        this.fileInput.accept = '.pdf';
+        this.fileInput.click();
+      });
+    }
+    container.appendChild(wrapper);
+  }
+
+  renderImageViewer(container, tab) {
+    container.innerHTML = `
+      <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; overflow:auto;">
+        <img src="${tab.blobUrl}" alt="${this.escapeHtml(tab.title)}" style="max-width:90%; max-height:80vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.3);" />
+        <div style="margin-top:16px; display:flex; gap:12px; align-items:center;">
+          <span style="font-size:0.85rem; color:var(--text-secondary);">${this.escapeHtml(tab.title)}</span>
+          <button class="btn btn-sm btn-primary" id="btnAnalyzeImage">⚡ Gemini 이미지 분석</button>
+        </div>
+      </div>
+    `;
+    container.querySelector('#btnAnalyzeImage')?.addEventListener('click', () => {
+      this.aiPromptInput.value = '이 이미지에 대해 자세히 설명해 줘.';
+      this.sendAiPrompt();
+    });
   }
 
   handleGlobalShortcuts(e) {
@@ -582,7 +678,9 @@ class AIOfficeApp {
     const docContext = activeTab ? {
       type: activeTab.type,
       title: activeTab.title,
-      content: activeTab.content
+      content: activeTab.content,
+      base64Data: activeTab.base64Data || null,
+      mimeType: activeTab.mimeType || null
     } : null;
 
     const aiMsgEl = this.addAiMessage('ai', '생각 중...');
@@ -620,11 +718,11 @@ class AIOfficeApp {
     if (!activeTab) return;
 
     const prompts = {
-      summarize: '현재 열려 있는 문서의 핵심 요점 3가지를 정리해 요약해 줘.',
-      fill_table: '문서의 표나 수치 데이터를 분석하여 빈 칸에 들어갈 현실적인 데이터와 합계를 추천해 줘.',
-      correct: '문서의 맞춤법, 띄어쓰기, 문맥을 점검하고 자연스럽고 전문적인 문장으로 교정해 줘.',
-      translate: '현재 문서를 자연스러운 영어(English)로 번역해 줘.',
-      slides: '현재 문서의 내용을 바탕으로 발표용 3장 슬라이드(제목과 3가지 핵심 불릿 포인트)를 기획해 줘.'
+      summarize: '현재 열려 있는 문서의 핵심 요점과 중요 내용을 일목요연하게 요약해 줘.',
+      polish: '문서의 맞춤법, 띄어쓰기, 문맥을 점검하고 자연스럽고 유려한 문장으로 다듬어 줘.',
+      translate_ko: '문서의 내용을 자연스러운 한국어로 번역하고 핵심을 설명해 줘.',
+      format_table: '문서의 내용을 바탕으로 체계적인 Markdown 표(Table)로 데이터를 정리해 줘.',
+      fix_grammar: '문서에서 오탈자, 맞춤법, 어색한 어휘를 찾아내고 올바르게 고친 내역을 표로 보여줘.'
     };
 
     const promptText = prompts[action] || '문서를 검토해 줘.';
@@ -632,22 +730,130 @@ class AIOfficeApp {
     this.sendAiPrompt();
   }
 
+  loadFile(file) {
+    if (!file) return;
+    const ext = file.name.slice(file.name.lastIndexOf('.') + 1).toLowerCase();
+
+    // 1. PDF Documents: Create native blob URL and read base64 for Gemini
+    if (ext === 'pdf') {
+      const blobUrl = URL.createObjectURL(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64Data = ev.target.result.split(',')[1];
+        this.createNewTab('pdf', file.name, {
+          blobUrl,
+          base64Data,
+          mimeType: 'application/pdf',
+          fileSize: file.size,
+          text: `[PDF 문서: ${file.name}] 크기: ${(file.size / 1024 / 1024).toFixed(2)} MB`
+        });
+        this.showToast(`PDF 열기 완료: ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // 2. Excel Spreadsheets (XLSX, XLS)
+    if (ext === 'xlsx' || ext === 'xls') {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          if (window.XLSX) {
+            const data = new Uint8Array(ev.target.result);
+            const workbook = window.XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const rawJson = window.XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            const maxCols = Math.max(...rawJson.map(r => r.length), 4);
+            const headers = rawJson[0] ? rawJson[0].map((h, i) => String(h || String.fromCharCode(65 + i))) : Array.from({ length: maxCols }, (_, i) => String.fromCharCode(65 + i));
+            const rows = rawJson.slice(1).map(r => {
+              const row = [];
+              for (let i = 0; i < headers.length; i++) {
+                row.push(String(r[i] ?? ''));
+              }
+              return row;
+            });
+            this.createNewTab('xlsx', file.name, JSON.stringify({ headers, rows: rows.length ? rows : [['', '', '', '']] }));
+            this.showToast(`스프레드시트 열기 완료: ${file.name}`);
+          } else {
+            this.createNewTab('xlsx', file.name);
+          }
+        } catch (err) {
+          console.error('XLSX parse error', err);
+          this.createNewTab('xlsx', file.name);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    // 3. Word Documents (DOCX)
+    if (ext === 'docx') {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          if (window.mammoth) {
+            const result = await window.mammoth.convertToHtml({ arrayBuffer: ev.target.result });
+            this.createNewTab('docx', file.name, result.value || `[빈 Word 문서: ${file.name}]`);
+            this.showToast(`워드 문서 열기 완료: ${file.name}`);
+          } else {
+            this.createNewTab('docx', file.name);
+          }
+        } catch (err) {
+          console.error('DOCX parse error', err);
+          this.createNewTab('docx', file.name);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    // 4. CSV Files
+    if (ext === 'csv') {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const lines = ev.target.result.split(/\r?\n/).filter(Boolean);
+        const rows = lines.map(line => line.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
+        const headers = rows[0] || ['A', 'B', 'C', 'D'];
+        this.createNewTab('xlsx', file.name, JSON.stringify({ headers, rows: rows.slice(1) }));
+        this.showToast(`CSV 열기 완료: ${file.name}`);
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    // 5. Image Files (PNG, JPG, JPEG, WEBP, SVG, GIF)
+    if (['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif'].includes(ext)) {
+      const blobUrl = URL.createObjectURL(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64Data = ev.target.result.split(',')[1];
+        this.createNewTab('image', file.name, {
+          blobUrl,
+          base64Data,
+          mimeType: file.type || `image/${ext}`,
+          fileSize: file.size,
+          text: `[이미지 파일: ${file.name}]`
+        });
+        this.showToast(`이미지 열기 완료: ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // 6. Text, Markdown, HTML, Code, HWP
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      this.createNewTab(ext || 'txt', file.name, ev.target.result);
+      this.showToast(`문서 열기 완료: ${file.name}`);
+    };
+    reader.readAsText(file);
+  }
+
   handleFileSelect(e) {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    const ext = file.name.slice(file.name.lastIndexOf('.') + 1).toLowerCase();
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const content = event.target.result;
-      this.createNewTab(ext || 'txt', file.name, content);
-    };
-
-    if (ext === 'pdf') {
-      this.createNewTab('pdf', file.name, `[PDF 문서: ${file.name}] 크기: ${(file.size / 1024).toFixed(1)} KB`);
-    } else {
-      reader.readAsText(file);
+    if (file) {
+      this.loadFile(file);
     }
     e.target.value = '';
   }
@@ -655,6 +861,16 @@ class AIOfficeApp {
   saveCurrentFile() {
     const tab = this.getActiveTab();
     if (!tab) return;
+
+    if (tab.blobUrl) {
+      const a = document.createElement('a');
+      a.href = tab.blobUrl;
+      a.download = tab.title;
+      a.click();
+      this.showToast(`다운로드 시작: ${tab.title}`);
+      return;
+    }
+
     const blob = new Blob([tab.content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

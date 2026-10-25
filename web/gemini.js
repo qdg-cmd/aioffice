@@ -48,12 +48,27 @@ export class GeminiService {
 사용자의 문서 작성, 서식 편집, 표 채우기, 요약, 문맥 개선, 번역, 슬라이드 기획 등의 요청을 전문적이고 친절하게 지원합니다.
 답변은 읽기 쉬운 한국어 마크다운(Markdown) 포맷으로 작성해 주세요.`;
 
+    const userParts = [];
+
+    // Multimodal attachments (e.g. PDF documents, images)
+    if (docContext && docContext.base64Data && docContext.mimeType) {
+      userParts.push({
+        inlineData: {
+          mimeType: docContext.mimeType,
+          data: docContext.base64Data
+        }
+      });
+    }
+
     let contextMessage = '';
-    if (docContext && docContext.content) {
+    if (docContext && docContext.content && !docContext.base64Data) {
       contextMessage = `\n\n[현재 열려 있는 문서 정보]\n- 종류: ${docContext.type}\n- 제목: ${docContext.title}\n- 내용 요약/발췌:\n"""\n${String(docContext.content).slice(0, 8000)}\n"""`;
+    } else if (docContext && docContext.title) {
+      contextMessage = `\n\n[첨부된 문서 정보]\n- 종류: ${docContext.type}\n- 제목: ${docContext.title}`;
     }
 
     const fullPrompt = `${contextMessage ? contextMessage + '\n\n' : ''}[사용자 요청]: ${prompt}`;
+    userParts.push({ text: fullPrompt });
 
     const requestBody = {
       systemInstruction: {
@@ -62,7 +77,7 @@ export class GeminiService {
       contents: [
         {
           role: 'user',
-          parts: [{ text: fullPrompt }]
+          parts: userParts
         }
       ],
       generationConfig: {
