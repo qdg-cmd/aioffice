@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
 import { assertZipInflatesWithinLimits, assertZipWithinLimits } from '@genoffice/docx-engine'
+import { placeholderSource } from '@genoffice/agent-core/redact-core'
 
 export interface DocxTextOptions {
   /** stop once this many characters have been collected (the caller slices anyway) */
@@ -176,6 +177,7 @@ function scanBody(
   let depth = 0
   let inText = false
   let runHidden = false
+  let runRedactedLabel: string | null = null
   let noteSeparator = false
   let noteLines: string[] = []
 
@@ -216,7 +218,7 @@ function scanBody(
     if (out.full) return
     const [, close, name, attrs, selfClose, text] = m
     if (text !== undefined) {
-      if (inText && !skip && !runHidden) appendText(decodeEntities(text))
+      if (inText && !skip && !runHidden && !runRedactedLabel) appendText(decodeEntities(text))
       continue
     }
     const opening = !close
@@ -275,7 +277,30 @@ function scanBody(
         }
         break
       case 'w:r':
-        if (opening) runHidden = false
+        if (opening) {
+          runHidden = false
+          runRedactedLabel = null
+        }
+        if (ending) {
+          if (runRedactedLabel) {
+            appendText(placeholderSource(runRedactedLabel))
+          }
+          runRedactedLabel = null
+        }
+        break
+      case 'go:redact':
+      case 'w:redact':
+      case 'redact':
+        if (opening) {
+          const lbl = /label="([^"]*)"/.exec(attrs ?? '')?.[1]
+          runRedactedLabel = lbl || 'private'
+        }
+        break
+      case 'w:highlight':
+        // Word users sometimes blackout text with black highlight
+        if (opening && /w:val="black"/.test(attrs ?? '')) {
+          runRedactedLabel = 'blackout'
+        }
         break
       case 'w:vanish':
         if (opening && !/w:val="(0|false)"/.test(attrs!)) runHidden = true

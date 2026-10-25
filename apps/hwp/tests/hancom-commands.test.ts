@@ -165,6 +165,37 @@ describe('보통 모양 (Alt+Shift+C)', () => {
   })
 })
 
+describe('확장 한글 서식 단축키 (글자 크기, 자간, 장평, 줄 간격)', () => {
+  it('emits format-char and format-para with correct delta adjustments', () => {
+    const emit = vi.fn()
+    const services = { eventBus: { emit } }
+
+    command('ieum:font-size-up').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-char', { fontSizeDelta: 100 })
+
+    command('ieum:font-size-down').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-char', { fontSizeDelta: -100 })
+
+    command('ieum:letter-spacing-up').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-char', { letterSpacingDelta: 1 })
+
+    command('ieum:letter-spacing-down').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-char', { letterSpacingDelta: -1 })
+
+    command('ieum:char-ratio-up').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-char', { charRatioDelta: 1 })
+
+    command('ieum:char-ratio-down').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-char', { charRatioDelta: -1 })
+
+    command('ieum:line-spacing-up').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-para', { lineSpacingDelta: 10 })
+
+    command('ieum:line-spacing-down').execute(services)
+    expect(emit).toHaveBeenCalledWith('format-para', { lineSpacingDelta: -10 })
+  })
+})
+
 describe('날짜/시간 문자열 (Ctrl+K,D)', () => {
   it('writes the date the way Hancom Hangul 2024 does by default', () => {
     expect(dateString(new Date(2026, 9, 23))).toBe('2026년 10월 23일')

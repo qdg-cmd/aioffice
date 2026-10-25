@@ -575,3 +575,46 @@ describe('html: a mark that cannot be processed fails the read', () => {
     expect(() => redactHtmlSource(`<span data-gx-redact>${SECRET}</span>`)).toThrow(/redaction/i)
   })
 })
+
+describe('Word (.docx) redaction', () => {
+  async function makeDocx(documentXml: string): Promise<Uint8Array> {
+    const zip = new JSZip()
+    zip.file('word/document.xml', documentXml)
+    return await zip.generateAsync({ type: 'uint8array' })
+  }
+
+  it('masks runs containing go:redact with {{label}}', async () => {
+    const xml =
+      '<?xml version="1.0" encoding="UTF-8"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:go="https://genspark.ai/genoffice/redaction/2026">' +
+      '<w:body>' +
+      '<w:p>' +
+      '<w:r><w:t>Hello </w:t></w:r>' +
+      '<w:r><w:rPr><go:redact label="client_name"/></w:rPr><w:t>John Doe</w:t></w:r>' +
+      '<w:r><w:t>!</w:t></w:r>' +
+      '</w:p>' +
+      '</w:body>' +
+      '</w:document>'
+    const bytes = await makeDocx(xml)
+    const res = await parseFileToText('report.docx', bytes)
+    expect(res.text).toBe('Hello {{client_name}}!')
+    expect(res.text).not.toContain('John Doe')
+  })
+
+  it('masks runs containing w:highlight black with {{blackout}}', async () => {
+    const xml =
+      '<?xml version="1.0" encoding="UTF-8"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      '<w:body>' +
+      '<w:p>' +
+      '<w:r><w:t>Secret: </w:t></w:r>' +
+      '<w:r><w:rPr><w:highlight w:val="black"/></w:rPr><w:t>top_secret_code</w:t></w:r>' +
+      '</w:p>' +
+      '</w:body>' +
+      '</w:document>'
+    const bytes = await makeDocx(xml)
+    const res = await parseFileToText('secret.docx', bytes)
+    expect(res.text).toBe('Secret: {{blackout}}')
+    expect(res.text).not.toContain('top_secret_code')
+  })
+})

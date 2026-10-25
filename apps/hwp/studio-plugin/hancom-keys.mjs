@@ -128,6 +128,15 @@ export const ADDED_SHORTCUTS = [
   [{ key: 'b', code: 'KeyB', alt: true, shift: true }, 'format:bold'],
   [{ key: 'i', code: 'KeyI', alt: true, shift: true }, 'format:italic'],
   [{ key: 'u', code: 'KeyU', alt: true, shift: true }, 'format:underline'],
+  // Hangul expanded formatting shortcuts: 글자 크기, 자간, 장평, 줄 간격
+  [{ key: 'e', code: 'KeyE', alt: true, shift: true }, 'ieum:font-size-up'],
+  [{ key: 'r', code: 'KeyR', alt: true, shift: true }, 'ieum:font-size-down'],
+  [{ key: 'w', code: 'KeyW', alt: true, shift: true }, 'ieum:letter-spacing-up'],
+  [{ key: 'n', code: 'KeyN', alt: true, shift: true }, 'ieum:letter-spacing-down'],
+  [{ key: 'k', code: 'KeyK', alt: true, shift: true }, 'ieum:char-ratio-up'],
+  [{ key: 'j', code: 'KeyJ', alt: true, shift: true }, 'ieum:char-ratio-down'],
+  [{ key: 'z', code: 'KeyZ', alt: true, shift: true }, 'ieum:line-spacing-up'],
+  [{ key: 'a', code: 'KeyA', alt: true, shift: true }, 'ieum:line-spacing-down'],
   // as in the app's other editors; on a Mac, Cmd+H (hide) never reaches the page
   [{ key: 'h', code: 'KeyH', ctrl: true }, 'edit:find-replace'],
   ...Array.from({ length: STYLE_KEYS }, (_, i) => [
@@ -753,6 +762,78 @@ export function hancomCommands(locale, studio = {}) {
           applyPageNumber(services, setting)
           ih.focus?.()
         }).show()
+      },
+    },
+    {
+      id: 'ieum:font-size-up',
+      label: ko ? '글자 크기 확대' : 'Enlarge Font Size',
+      shortcutLabel: 'Alt+Shift+E',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-char', { fontSizeDelta: 100 })
+      },
+    },
+    {
+      id: 'ieum:font-size-down',
+      label: ko ? '글자 크기 축소' : 'Reduce Font Size',
+      shortcutLabel: 'Alt+Shift+R',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-char', { fontSizeDelta: -100 })
+      },
+    },
+    {
+      id: 'ieum:letter-spacing-up',
+      label: ko ? '자간 넓히기' : 'Increase Letter Spacing',
+      shortcutLabel: 'Alt+Shift+W',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-char', { letterSpacingDelta: 1 })
+      },
+    },
+    {
+      id: 'ieum:letter-spacing-down',
+      label: ko ? '자간 좁히기' : 'Decrease Letter Spacing',
+      shortcutLabel: 'Alt+Shift+N',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-char', { letterSpacingDelta: -1 })
+      },
+    },
+    {
+      id: 'ieum:char-ratio-up',
+      label: ko ? '장평 넓히기' : 'Increase Char Ratio',
+      shortcutLabel: 'Alt+Shift+K',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-char', { charRatioDelta: 1 })
+      },
+    },
+    {
+      id: 'ieum:char-ratio-down',
+      label: ko ? '장평 좁히기' : 'Decrease Char Ratio',
+      shortcutLabel: 'Alt+Shift+J',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-char', { charRatioDelta: -1 })
+      },
+    },
+    {
+      id: 'ieum:line-spacing-up',
+      label: ko ? '줄 간격 늘리기' : 'Increase Line Spacing',
+      shortcutLabel: 'Alt+Shift+Z',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-para', { lineSpacingDelta: 10 })
+      },
+    },
+    {
+      id: 'ieum:line-spacing-down',
+      label: ko ? '줄 간격 줄이기' : 'Decrease Line Spacing',
+      shortcutLabel: 'Alt+Shift+A',
+      canExecute: (ctx) => ctx.hasDocument && !ctx.isFormMode,
+      execute(services) {
+        services.eventBus.emit('format-para', { lineSpacingDelta: -10 })
       },
     },
   )
