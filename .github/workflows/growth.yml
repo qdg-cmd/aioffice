@@ -6,9 +6,6 @@ name: Growth
 # the commit lands where the daily branch-off starts from.
 
 on:
-  schedule:
-    # 00:00 UTC daily; a minute offset avoids the top-of-hour cron crunch.
-    - cron: '17 0 * * *'
   workflow_dispatch:
 
 concurrency:

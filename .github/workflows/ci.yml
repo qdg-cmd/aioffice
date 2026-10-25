@@ -7,10 +7,6 @@ name: CI
 # one, and it uses no repository secret.
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:

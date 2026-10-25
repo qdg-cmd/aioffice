@@ -9,8 +9,6 @@ name: Free models
 # real key's free requests and is done by hand (docs/operations.md, "무료 모델 점검").
 
 on:
-  schedule:
-    - cron: '0 0 * * 1' # Mondays 09:00 KST
   workflow_dispatch:
 
 concurrency:
