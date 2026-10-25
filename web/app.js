@@ -1131,7 +1131,6 @@ class AIOfficeApp {
     }
     return '[한글(HWP) 파일의 본문 데이터입니다]\n\n' + (clean || '내용을 직접 입력하거나 편집할 수 있습니다.');
   }
-  }
 
   handleFileSelect(e) {
     const file = e.target.files?.[0];
@@ -1180,6 +1179,10 @@ class AIOfficeApp {
 }
 
 // Initialize on load
-window.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', () => {
+    window.app = new AIOfficeApp();
+  });
+} else {
   window.app = new AIOfficeApp();
-});
+}
