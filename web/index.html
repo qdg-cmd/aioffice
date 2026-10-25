@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIOffice - 스마트 AI 오피스 스위트</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Global Hidden File Input -->
+  <input type="file" id="fileInput" style="display:none;" accept=".hwp,.hwpx,.docx,.xlsx,.pptx,.pdf,.md,.markdown,.txt,.json,.html,.xmind,.epub">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <button class="btn btn-sm" id="sidebarToggle" title="사이드바 토글">☰</button>
+      <div class="brand-logo">
+        ✨ AIOffice <span>WEB</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-sm" id="btnNewDoc">➕ 새 문서</button>
+      <button class="btn btn-sm" id="btnOpenFile">📂 파일 열기</button>
+      <button class="btn btn-sm" id="btnSaveFile">💾 다운로드</button>
+      <button class="btn btn-sm" id="btnExportFile">🖨️ 인쇄/PDF</button>
+
+      <div class="badge-gemini" id="geminiBadge" title="Google Gemini API 키 설정">
+        <span class="dot"></span>
+        <span class="badge-label">Gemini 키 설정 필요</span>
+      </div>
+
+      <button class="btn btn-sm" id="themeToggle" title="테마 변경">🌙</button>
+      <button class="btn btn-sm" id="aiPanelToggle" title="AI 어시스턴트 토글">✨ AI 패널</button>
+    </div>
+  </header>
+
+  <!-- Tabs Bar -->
+  <div class="tabs-bar" id="tabsBar">
+    <!-- Populated dynamically by app.js -->
+  </div>
+
+  <!-- Main Workspace -->
+  <div class="workspace-container">
+    <!-- Left Sidebar: Formats & Tools -->
+    <aside class="sidebar-left" id="sidebarLeft">
+      <div class="sidebar-section">
+        <div class="sidebar-title">지원 문서 포맷 (9종)</div>
+        <div class="format-grid">
+          <button class="format-btn" data-format="hwp">🇰🇷 한글 (HWP)</button>
+          <button class="format-btn" data-format="docx">📘 워드 (DOCX)</button>
+          <button class="format-btn" data-format="xlsx">📗 엑셀 (XLSX)</button>
+          <button class="format-btn" data-format="pptx">📙 슬라이드 (PPT)</button>
+          <button class="format-btn" data-format="pdf">📕 PDF 뷰어</button>
+          <button class="format-btn" data-format="md">📝 마크다운</button>
+          <button class="format-btn" data-format="html">🌐 웹페이지</button>
+          <button class="format-btn" data-format="xmind">🧠 마인드맵</button>
+          <button class="format-btn" data-format="epub">📖 전자책</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="sidebar-title">한컴 한글 단축키 안내</div>
+        <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.6; background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border-color);">
+          <div>• <code>Alt+Shift+E/R</code> : 글자 크기 확대/축소</div>
+          <div>• <code>Alt+Shift+W/N</code> : 자간 넓게/좁게</div>
+          <div>• <code>Alt+Shift+K/J</code> : 장평 늘리기/줄이기</div>
+          <div>• <code>Alt+Shift+Z/A</code> : 줄간격 넓게/좁게</div>
+          <div>• <code>Ctrl+B/I/U</code> : 굵게/기울임/밑줄</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Editor Area -->
+    <main class="editor-canvas" id="editorCanvas">
+      <!-- Injected dynamically by app.js -->
+    </main>
+
+    <!-- Right Sidebar: Google Gemini Copilot -->
+    <aside class="sidebar-right" id="sidebarRight">
+      <div class="ai-header">
+        <div style="font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
+          <span>✨</span> AIOffice Copilot
+        </div>
+        <div class="ai-model-tag">
+          ⚡ gemini-flash-lite-latest
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div class="ai-messages" id="aiMessages">
+        <div class="msg msg-ai">
+          👋 안녕하세요! <b>AIOffice AI 어시스턴트</b>입니다.<br><br>
+          Google 최신 고속 모델(<code>gemini-flash-lite-latest</code>)을 통해 문서 작성, 요약, 번역, 수식 생성 등을 즉각 처리해 드립니다.<br><br>
+          상단의 <b>[Gemini 키 설정]</b>을 클릭하여 무료 API 키를 등록하고 시작해보세요.
+        </div>
+      </div>
+
+      <!-- Quick Action Pills -->
+      <div class="ai-quick-actions">
+        <button class="action-pill" data-action="summarize">⚡ 핵심 요약</button>
+        <button class="action-pill" data-action="polish">✍️ 문장 교정</button>
+        <button class="action-pill" data-action="translate_ko">🌐 한글 번역</button>
+        <button class="action-pill" data-action="format_table">📊 표/데이터 생성</button>
+        <button class="action-pill" data-action="fix_grammar">🔍 맞춤법 검사</button>
+      </div>
+
+      <!-- Input Area -->
+      <div class="ai-input-box">
+        <div class="ai-textarea-wrapper">
+          <textarea class="ai-textarea" id="aiPromptInput" placeholder="문서에 대해 무엇이든 질문하거나 지시하세요 (Enter 전송, Shift+Enter 줄바꿈)..."></textarea>
+          <div class="ai-submit-row">
+            <span style="font-size:0.7rem; color:var(--text-muted);">현재 활성 문서와 자동 연동</span>
+            <button class="btn btn-primary btn-sm" id="btnSendAi">전송 🚀</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Gemini API Key Modal -->
+  <div class="modal-overlay" id="apiKeyModal" style="display:none;">
+    <div class="modal-card">
+      <h3>🔑 Google Gemini API 설정</h3>
+      <p>
+        AIOffice는 사용자의 브라우저에서 직접 Google Gemini API를 호출합니다.<br>
+        입력하신 API 키는 서버로 전송되지 않고 브라우저 로컬 저장소(localStorage)에만 안전하게 보관됩니다.
+      </p>
+      <input type="password" class="input-field" id="inputApiKey" placeholder="AIzaSy... (Gemini API Key)">
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:16px;">
+        💡 Google AI Studio(<a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com/apikey</a>)에서 무료로 발급받으실 수 있습니다.
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btnCancelKey">취소</button>
+        <button class="btn btn-primary" id="btnSaveKey">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
